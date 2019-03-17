@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>TI Tiva C USB echo + macOS libusb app</title>
+	<meta charset="UTF-8">
+	<meta name="description" content="TI Tiva C USB echo + macOS libusb app">
+<style>
+	.center
+	{
+	    margin-left: auto;
+	    margin-right: auto ;
+		text-align: center ; 
+	}
+	img.displayed {
+	    display: block;
+	    margin-left: auto;
+	    margin-right: auto }
+	</style>
+
+</head>
+<body>
+	<h2>TI Tiva C USB echo + macOS libusb app</h2>
+	<hr>
+	<p>
+		I'm using Texas Instruments USB example on TI ARM Cortex M4 Tiva C:
+		<blockquote>USB Generic Bulk Device
+		This example provides a generic USB device offering simple bulk data
+		transfer to and from the host. The device uses a vendor-specific class ID
+		and supports a single bulk IN endpoint and a single bulk OUT endpoint.
+		Data received from the host is assumed to be ASCII text and it is
+		echoed back with the case of all alphabetic characters swapped.</blockquote>
+		Wrote macOS app which uses libusb to interact with Tiva C. Sent text gets echoed and uppercased.
+	</p>
+	<div class="center">
+	<img class="displayed" src="img/macOS_USB.png" alt="macOS USB App">
+	<img class="displayed" src="img/tiva_c.png" alt="TI Tiva C USB">
+	</div>
+</html>

@@ -1,0 +1,106 @@
+#import "PublicKeyKeyChain.h"
+
+@implementation PublicKeyKeyChain
+
+
++ (NSData*) getKeyData: (SecKeyRef) key
+{
+    CFErrorRef error = NULL;
+    NSData* keyData = (NSData*)CFBridgingRelease(
+                                                 SecKeyCopyExternalRepresentation(key, &error)
+                                                 );
+    if (!keyData) {
+        // TODO: error reporting
+        NSError *err = CFBridgingRelease(error);
+        return nil ;
+    }
+    return keyData ;
+}
+
+// release after use
++ (SecKeyRef) findKey: (NSString*) tag isPrivate: (BOOL) type
+{
+    SecKeyRef key = NULL ;
+    id class ;
+    if (type) class = (id)kSecAttrKeyClassPrivate ;
+    else class = (id)kSecAttrKeyClassPublic ;
+    NSDictionary *getquery = @{ (id)kSecClass: (id)kSecClassKey,
+                                (id)kSecAttrApplicationTag: tag,
+                                (id)kSecReturnRef: @YES,
+                                };
+    OSStatus status = SecItemCopyMatching((__bridge CFDictionaryRef)getquery,
+                                          (CFTypeRef *)&key);
+    // TODO: handle proper error reporting/handling
+    if (status!=errSecSuccess) return NULL ;
+    else return key ;
+}
+
++ (void)addKey:(NSData *)key withTag: (NSString*) tagName
+{
+    NSDictionary* createQuery = @{(id)kSecAttrKeyType: (id)kSecAttrKeyTypeRSA,
+                              (id)kSecAttrKeyClass: (id)kSecAttrKeyClassPrivate,
+                              (id)kSecAttrKeySizeInBits: @4096
+                              };
+    CFErrorRef secCreateError = NULL;
+    SecKeyRef privateKeySec =  SecKeyCreateWithData((__bridge CFDataRef)key,
+                                         (__bridge CFDictionaryRef)createQuery,
+                                         &secCreateError);
+    if (secCreateError)
+    {
+        //TODO: handle error reporting
+        // NSError *secCreateErr = (__bridge NSError *)secCreateError;
+        CFRelease(secCreateError) ;
+        if (privateKeySec) CFRelease(privateKeySec) ;
+        return ;
+    }
+    if (privateKeySec)
+    {
+        NSData* tag = [tagName dataUsingEncoding:NSUTF8StringEncoding];
+        NSDictionary* addPrivateQuery = @{
+                                     (id)kSecValueRef: (__bridge id)privateKeySec,
+                                     (id)kSecClass: (__bridge id)kSecClassKey,
+                                     (id)kSecAttrKeyClass: (id)kSecAttrKeyClassPrivate,
+                                     (id)kSecAttrApplicationTag: tag
+                                    };
+        OSStatus addStatus = SecItemAdd((__bridge CFDictionaryRef)addPrivateQuery, NULL);
+        NSString *addQueryError = CFBridgingRelease(SecCopyErrorMessageString(addStatus, NULL));
+        // TODO: handle error reporting
+        if (addStatus != errSecSuccess)
+        {
+            // TODO: handle proper error reporting
+            NSLog(@"Add error: %@", addQueryError) ;
+            NSLog(@"Error adding PRIVATE key!") ;
+            if (privateKeySec) CFRelease(privateKeySec) ;
+        }
+        else
+        {
+            NSLog(@"PRIVATE Key added succesfully") ;
+            /*
+            SecKeyRef publicKeySec = SecKeyCopyPublicKey(privateKeySec);
+            if (privateKeySec) CFRelease(privateKeySec) ;
+            NSDictionary* addPublicQuery = @{
+                                              (id)kSecValueRef: (__bridge id)privateKeySec,
+                                              (id)kSecClass: (__bridge id)kSecClassKey,
+                                              (id)kSecAttrKeyClass: (id)kSecAttrKeyClassPublic,
+                                              (id)kSecAttrApplicationTag: tag
+                                              };
+            OSStatus addStatus = SecItemAdd((__bridge CFDictionaryRef)addPublicQuery, NULL);
+            NSString *addQueryError = CFBridgingRelease(SecCopyErrorMessageString(addStatus, NULL)) ;
+            if (addStatus != errSecSuccess)
+            {
+                // TODO: handle proper error reporting
+                NSLog(@"Add error: %@", addQueryError) ;
+                NSLog(@"Error adding PUBLIC key!") ;
+                if (publicKeySec) CFRelease(publicKeySec) ;
+            }
+            else
+            {
+                NSLog(@"PUBLIC key added succesfully") ;
+                if (publicKeySec) CFRelease(publicKeySec) ;
+            }
+            */
+        }
+    }
+}
+
+@end
